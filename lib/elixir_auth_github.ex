@@ -30,7 +30,8 @@ defmodule ElixirAuthGithub do
   `client_secret/0` returns a `String` of the `GITHUB_CLIENT_SECRET`
   """
   def client_secret do
-    System.get_env("GITHUB_CLIENT_SECRET") || Application.get_env(:elixir_auth_github, :client_secret)
+    System.get_env("GITHUB_CLIENT_SECRET") ||
+      Application.get_env(:elixir_auth_github, :client_secret)
   end
 
   @doc """
@@ -74,6 +75,21 @@ defmodule ElixirAuthGithub do
         "client_id" => client_id(),
         "client_secret" => client_secret(),
         "code" => code
+      })
+
+    inject_poison().post!(@github_auth_url <> query, "")
+    |> Map.get(:body)
+    |> URI.decode_query()
+    |> check_authenticated
+  end
+
+  def github_auth(code, redirect_to: url) do
+    query =
+      URI.encode_query(%{
+        "client_id" => client_id(),
+        "client_secret" => client_secret(),
+        "code" => code,
+        "redirect_uri" => url
       })
 
     inject_poison().post!(@github_auth_url <> query, "")
